@@ -1,6 +1,7 @@
 package com.example.demo.task;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -15,7 +16,7 @@ public final class TaskModels {
     public record CreateTaskRequest(
             @NotBlank @Size(max = 128) String taskId,
             @NotNull @Future Instant executeAt,
-            @NotNull JsonNode payload) {}
+            @NotNull ObjectNode payload) {}
 
     public record TaskResponse(String taskId, Instant executeAt, JsonNode payload, TaskStatus status) {}
 

@@ -16,8 +16,19 @@ public class TaskExceptionHandler {
         return problem(HttpStatus.CONFLICT, "A task with this taskId already exists");
     }
 
-    @ExceptionHandler({MethodArgumentNotValidException.class, HttpMessageNotReadableException.class,
-            MethodArgumentTypeMismatchException.class, jakarta.validation.ConstraintViolationException.class})
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    ProblemDetail invalidBody(MethodArgumentNotValidException exception) {
+        String fields = exception.getBindingResult().getFieldErrors().stream()
+                .map(error -> error.getField())
+                .distinct()
+                .sorted()
+                .reduce((first, second) -> first + ", " + second)
+                .orElse("request");
+        return problem(HttpStatus.BAD_REQUEST, "Invalid value for: " + fields);
+    }
+
+    @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class,
+            jakarta.validation.ConstraintViolationException.class})
     ProblemDetail invalidRequest(Exception exception) {
         return problem(HttpStatus.BAD_REQUEST, "Request contains invalid or malformed values");
     }

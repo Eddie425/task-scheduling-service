@@ -5,7 +5,8 @@ CREATE TABLE IF NOT EXISTS scheduled_task (
     status VARCHAR(16) NOT NULL,
     created_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6),
     updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
-    INDEX idx_task_due (status, execute_at, task_id)
+    INDEX idx_task_due (status, execute_at, task_id),
+    CONSTRAINT chk_task_status CHECK (status IN ('PENDING', 'DISPATCHING', 'TRIGGERED', 'CANCELLED'))
 );
 
 CREATE TABLE IF NOT EXISTS task_outbox (
@@ -20,5 +21,7 @@ CREATE TABLE IF NOT EXISTS task_outbox (
     updated_at TIMESTAMP(6) NOT NULL DEFAULT CURRENT_TIMESTAMP(6) ON UPDATE CURRENT_TIMESTAMP(6),
     UNIQUE KEY uk_outbox_task (task_id),
     INDEX idx_outbox_dispatch (status, next_attempt_at, id),
-    CONSTRAINT fk_outbox_task FOREIGN KEY (task_id) REFERENCES scheduled_task (task_id)
+    CONSTRAINT fk_outbox_task FOREIGN KEY (task_id) REFERENCES scheduled_task (task_id),
+    CONSTRAINT chk_outbox_status CHECK (status IN ('PENDING', 'SENT')),
+    CONSTRAINT chk_outbox_attempt_count CHECK (attempt_count >= 0)
 );

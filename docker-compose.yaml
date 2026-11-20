@@ -38,11 +38,6 @@ services:
     environment:
       JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
     command: sh mqnamesrv
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9876"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
 
   rocketmq-broker:
     image: apache/rocketmq:5.1.4
@@ -69,6 +64,29 @@ services:
       JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876 -Dcom.rocketmq.sendMessageWithVIPChannel=false"
     depends_on:
       - rocketmq-namesrv
+
+  app:
+    profiles: ["app"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    ports:
+      - "${APP_PORT:-8080}:8080"
+    environment:
+      DB_URL: jdbc:mysql://mysql:3306/taskdb?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+      DB_USERNAME: taskuser
+      DB_PASSWORD: taskpass
+      REDIS_HOST: redis
+      REDIS_CACHE_ENABLED: ${REDIS_CACHE_ENABLED:-false}
+      ROCKETMQ_NAMESRV_ADDR: rocketmq-namesrv:9876
+    depends_on:
+      mysql:
+        condition: service_healthy
+      rocketmq-namesrv:
+        condition: service_started
+      rocketmq-broker:
+        condition: service_started
 
 volumes:
   mysql_data:
